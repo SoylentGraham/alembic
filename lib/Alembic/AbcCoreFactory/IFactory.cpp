@@ -35,7 +35,11 @@
 //-*****************************************************************************
 
 #include <fstream>
+
+#ifdef ALEMBIC_WITH_OGWARA
 #include <Alembic/AbcCoreOgawa/All.h>
+#endif 
+
 #include <Alembic/AbcCoreFactory/IFactory.h>
 
 #ifdef ALEMBIC_WITH_HDF5
@@ -60,7 +64,9 @@ IFactory::~IFactory()
 Alembic::Abc::IArchive IFactory::getArchive( const std::string & iFileName,
                                             CoreType & oType )
 {
+	Alembic::Abc::IArchive archive;
 
+#ifdef ALEMBIC_WITH_OGWARA
     // try Ogawa first, use kQuietNoop at first in case we fail
     Alembic::AbcCoreOgawa::ReadArchive ogawa( m_numStreams );
     Alembic::Abc::IArchive archive( ogawa, iFileName,
@@ -72,7 +78,8 @@ Alembic::Abc::IArchive IFactory::getArchive( const std::string & iFileName,
         archive.getErrorHandler().setPolicy( m_policy );
         return archive;
     }
-
+#endif
+	
 #ifdef ALEMBIC_WITH_HDF5
     Alembic::AbcCoreHDF5::ReadArchive hdf( m_cacheHierarchy );
     archive = Alembic::Abc::IArchive( hdf, iFileName,
@@ -117,7 +124,8 @@ Alembic::Abc::IArchive IFactory::getArchive( const std::string & iFileName )
 Alembic::Abc::IArchive IFactory::getArchive(
     const std::vector< std::istream * > & iStreams, CoreType & oType)
 {
-    // Ogawa is the only one which can do this
+#ifdef ALEMBIC_WITH_OGWARA
+	// Ogawa is the only one which can do this
     Alembic::AbcCoreOgawa::ReadArchive ogawa( iStreams );
     Alembic::Abc::IArchive archive( ogawa, "", m_policy, m_cachePtr );
     if ( archive.valid() )
@@ -125,7 +133,7 @@ Alembic::Abc::IArchive IFactory::getArchive(
         oType = kOgawa;
         return archive;
     }
-
+#endif
     oType = kUnknown;
     return Alembic::Abc::IArchive();
 }
